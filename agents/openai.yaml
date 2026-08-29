@@ -1,0 +1,7 @@
+interface:
+  display_name: "Jimu Codex Team"
+  short_description: "用最小必要 Agent 小队并行完成探索、执行与复审任务"
+  default_prompt: "Use $jimu-codex-team to decompose this task, delegate independent bounded work, and keep final decisions and acceptance in the main thread."
+
+policy:
+  allow_implicit_invocation: false
