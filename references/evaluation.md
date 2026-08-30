@@ -6,6 +6,8 @@ Read this reference only when the user asks whether delegation was worthwhile, r
 
 Record the root task ID, baseline artifact, acceptance checks, installed role-to-model mapping, and intended independent slices. Verify actual runtime role, model, effort, and sandbox from retained traces; Profile files alone do not prove runtime selection.
 
+Record the affected client, executable path, and runtime version. A successful probe using a different CLI build does not establish Desktop compatibility. During setup/repair, run `python3 scripts/install-agent-profiles.py --check --roles Explorer Executor Reviewer default` to confirm ordinary files match the templates. Do not add this scan to normal task routing.
+
 Do not create duplicate work solely to benchmark agents. When comparison matters, keep one comparable slice in the main thread or compare against a stable previous baseline.
 
 ## Measure
@@ -25,9 +27,12 @@ Record:
 - wall-clock effect from useful parallelism;
 - processed input, cached input, output, and reasoning output tokens;
 - runtime model, effort, effective sandbox, terminal status, and depth;
+- Profile file type and template hash during setup, actual child tool calls, and underlying loading errors if a spawn fails;
 - retries, interruptions, partial artifacts, and duplicated work.
 
 Treat `completed` only as evidence that the trace contains a completion marker. It does not prove a correct artifact or useful final report. Local retained traces may omit ephemeral or unavailable sessions.
+
+Distinguish installed files, successful runtime routing, and accepted task output. For a no-side-effect probe, require no child tool calls and no business-file changes. When verifying a repair, include the originally affected task rather than only an isolated new CLI session. For the one authorized guard omission test, `subagent/unknown` can be expected; require the exact guard reply and then successful explicit-role routing.
 
 ## Interpret
 

@@ -21,11 +21,15 @@ Before any spawn, inspect the model-visible `spawn_agent` schema.
 
 - Every working spawn must explicitly pass `agent_type` as exactly `Explorer`, `Executor`, or `Reviewer`.
 - Never omit `agent_type`, never pass `default`, and never use `task_name` to select a profile.
+- The only omission exception is one explicitly authorized, no-tool guard self-test during installation or repair verification, as described in the setup reference. It is never a working dispatch.
 - If `agent_type` or the intended custom profile is unavailable, do not spawn a generic child. Keep the work in the main thread and report that custom-profile routing is unavailable.
 - If a child returns the dispatch-guard message or its trace shows `default` or `subagent/unknown`, reject the output. Repair routing before retrying.
+- `agent type is currently not available` is not proof of a missing parameter. It can also mean an unregistered role or a Profile load failure. For installation/repair, inspect the underlying error and active file type before retrying another role.
 - Read [references/agent-setup.md](references/agent-setup.md) only for installation, repair, runtime verification, guard enablement, or profile customization.
 
 The `default` profile is a fail-closed dispatch guard, not a working role. Its read-only setting is not an operating-system security boundary; the parent task's live permission mode remains authoritative.
+
+The Skill directory may remain symlinked. Install active Agent Profiles as ordinary TOML files copied from the canonical templates, using `scripts/install-agent-profiles.py`. Check file types and template hashes during setup/repair only, not during every normal task. Validate with the affected Desktop runtime and task, not a different CLI selected from PATH.
 
 ## Decomposition And Dispatch
 

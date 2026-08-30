@@ -45,6 +45,7 @@ class SkillContractTests(unittest.TestCase):
             "references/evaluation.md",
             "references/interactive-testing.md",
             "scripts/inspect-team-runs.py",
+            "scripts/install-agent-profiles.py",
         ):
             with self.subTest(relative=relative):
                 self.assertTrue((ROOT / relative).is_file())

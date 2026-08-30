@@ -82,18 +82,18 @@ git clone https://github.com/i-YOLO/jimu-codex-team.git ~/.local/share/jimu-code
 npx skills add ~/.local/share/jimu-codex-team
 ```
 
-### 2. Install The Three Working Profiles
+### 2. Install Ordinary Working Profiles
 
-Create the personal Agent directory, then link the three working Profiles from the checkout:
+Use Python 3.11+ on macOS or Linux; the installer uses only the standard library. Keep the templates as the source of truth and install ordinary TOML runtime copies. The Skill directory may be symlinked, but do not symlink active Profile files.
 
 ```bash
-mkdir -p ~/.codex/agents
-ln -s ~/.local/share/jimu-codex-team/assets/agent-profiles/Explorer.toml ~/.codex/agents/Explorer.toml
-ln -s ~/.local/share/jimu-codex-team/assets/agent-profiles/Executor.toml ~/.codex/agents/Executor.toml
-ln -s ~/.local/share/jimu-codex-team/assets/agent-profiles/Reviewer.toml ~/.codex/agents/Reviewer.toml
+python3 ~/.local/share/jimu-codex-team/scripts/install-agent-profiles.py
+python3 ~/.local/share/jimu-codex-team/scripts/install-agent-profiles.py --check
 ```
 
-Add or merge this section in `~/.codex/config.toml`:
+Default selection is the three working roles. Matching files are unchanged. Custom files and unknown links are conflicts unless you inspect them and explicitly use `--replace`. Directories, devices, FIFOs, sockets, and a symlinked Agent directory are rejected.
+
+Add or merge this section in `~/.codex/config.toml` only if needed:
 
 ```toml
 [agents]
@@ -102,32 +102,60 @@ max_concurrent_threads_per_session = 3
 interrupt_message = true
 ```
 
-Restart Codex or open a new task. Confirm that the model-visible `spawn_agent` schema can select `Explorer`, `Executor`, and `Reviewer` through `agent_type`, then run one no-side-effect probe for each role.
+Use `--agents-dir <project>/.codex/agents` for project-scoped copies.
 
-### 3. Enable The Optional Dispatch Guard
+#### Migrate The Previous Symlink Installation
 
-Only after all three working roles pass runtime verification:
+Inspect all four entries first:
 
 ```bash
-ln -s ~/.local/share/jimu-codex-team/assets/agent-profiles/default.toml ~/.codex/agents/default.toml
+python3 ~/.local/share/jimu-codex-team/scripts/install-agent-profiles.py --check --roles Explorer Executor Reviewer default
 ```
 
-Restart Codex again. A controlled spawn that omits `agent_type` must return:
+Move the guard itself into a unique backup directory, then migrate working roles:
+
+```bash
+mkdir -p ~/.codex/agents-disabled
+if [ -e ~/.codex/agents/default.toml ] || [ -L ~/.codex/agents/default.toml ]; then
+  guard_backup=$(mktemp -d ~/.codex/agents-disabled/jimu-guard.XXXXXX)
+  mv ~/.codex/agents/default.toml "$guard_backup/default.toml"
+fi
+python3 ~/.local/share/jimu-codex-team/scripts/install-agent-profiles.py --migrate-links
+python3 ~/.local/share/jimu-codex-team/scripts/install-agent-profiles.py --check
+```
+
+`--migrate-links` accepts only links to the matching templates in this checkout. Inspect links owned by another checkout before authorizing `--replace`. Do not copy over an existing symlink: that may overwrite its source without replacing the link.
+
+This failure was reproduced on Desktop `0.151.0-alpha.7.1`: linked Profiles caused `os error 62`, surfaced as `agent type is currently not available`, despite earlier successful CLI `0.145.0` probes. This is an observed compatibility issue, not a claim about all Codex versions.
+
+### 3. Verify Desktop Routing, Then Enable The Guard
+
+Test all three working roles in the affected Desktop task and record its actual executable and version. Another `codex` build selected from PATH is not equivalent evidence. Coordinate restart/resume only if configuration reload is needed; do not interrupt unrelated work.
+
+Inspect actual child traces for role, model, effort, completion, tool calls, and effective permissions. Neither a visible role name nor a child's self-report is sufficient.
+
+Only after all three pass:
+
+```bash
+python3 ~/.local/share/jimu-codex-team/scripts/install-agent-profiles.py --roles default
+python3 ~/.local/share/jimu-codex-team/scripts/install-agent-profiles.py --check --roles Explorer Executor Reviewer default
+```
+
+Run one authorized no-tool omission probe. It must return:
 
 ```text
 DISPATCH BLOCKED: the delegated task was not executed because agent_type was omitted or set to default. Respawn with agent_type=Explorer, Executor, or Reviewer.
 ```
 
-The personal `default` Profile overrides Codex's built-in fallback for omitted/default spawns across personal Codex tasks. If `agent_type` is unavailable, do not enable the guard.
+Then confirm an explicit `Explorer` still runs. This installation self-test is the sole exception to the normal explicit-role rule.
 
-To disable only the guard without removing the three working roles:
+The personal guard replaces Codex's omitted/default fallback across personal tasks. Keep it disabled if routing still fails. To disable it, move it into a unique backup location as above. Restore through the installer after checks pass, not by restoring a known-incompatible link.
 
-```bash
-mkdir -p ~/.codex/agents-disabled
-mv ~/.codex/agents/default.toml ~/.codex/agents-disabled/default.toml
-```
+### 4. Updates And Recovery
 
-See [Agent Profile Setup](./references/agent-setup.md) for verification and customization boundaries.
+Updates to templates do not silently change runtime copies. Run `--check`, inspect differences, then explicitly synchronize with `--replace` when intended. Originals are preserved under a timestamped sibling `agents-backups/jimu-codex-team/` directory; symlinks are backed up as links. Writes use staged files, directory-bound operations, and rollback on failure. Other Profiles are untouched.
+
+The installer does not edit `config.toml`, start agents, or access the network. File installation is not runtime acceptance. See [Agent Profile Setup](./references/agent-setup.md) for conflict handling and verification details.
 
 ## Use
 
@@ -164,7 +192,7 @@ Local traces may omit ephemeral or unavailable sessions. A completion marker doe
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -v
 ```
 
-The tests validate Profile parsing and role boundaries, explicit-only Skill metadata, dispatch contracts, trace task attribution, runtime metadata, terminal status, and token math.
+The tests cover real file installation, symlink migration, O_NOFOLLOW, idempotence, conflicts, backups, rollback, and directory-swap races, as well as Profile contracts, explicit invocation, trace attribution, and token math.
 
 ## Repository Layout
 
@@ -174,7 +202,7 @@ jimu-codex-team/
 ├── agents/openai.yaml
 ├── assets/agent-profiles/
 ├── references/
-├── scripts/inspect-team-runs.py
+├── scripts/                  # Profile installer and trace report
 └── tests/
 ```
 
