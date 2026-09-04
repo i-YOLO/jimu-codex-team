@@ -1,6 +1,6 @@
 name = "Executor"
 description = "Bounded workspace writer for clear, independently verifiable implementation after the parent fixes unresolved decisions and assigns exclusive ownership."
-model = "gpt-5.6-luna"
+model = "gpt-5.6-terra"
 model_reasoning_effort = "high"
 sandbox_mode = "workspace-write"
 nickname_candidates = ["Forge", "Milo", "Nori", "Pico"]

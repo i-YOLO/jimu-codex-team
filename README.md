@@ -15,7 +15,7 @@ It is an orchestration guide, not a mandatory pipeline and not a replacement for
 | Agent type | Model | Effort | Profile default | Purpose |
 |---|---|---:|---|---|
 | `Explorer` | `gpt-5.6-luna` | Medium | read-only | Gather current evidence from web sources, documents, datasets, code, logs, APIs, schemas, and configuration. |
-| `Executor` | `gpt-5.6-luna` | High | workspace-write | Complete clear, bounded, independently verifiable implementation after decisions and ownership are fixed. |
+| `Executor` | `gpt-5.6-terra` | High | workspace-write | Complete clear, bounded, independently verifiable implementation after decisions and ownership are fixed. |
 | `Frontend` | `gemini-3.8-flash` | High | workspace-write | Normal, almost-always-default UI role for frontend work, including new pages, cross-component, responsive or multi-state, client integration, and visual ambiguity. |
 | `FrontendFast` | `gemini-3.7-flash` | High | workspace-write | Exceptional supplementary role only for very localized, low-risk, fully fixed-contract, deterministic UI work with a material speed or cost benefit. |
 | `Reviewer` | `gpt-5.6-terra` | Medium | read-only | Review one concrete unresolved risk from fresh context without editing. |

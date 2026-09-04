@@ -13,7 +13,7 @@ class AgentProfileTests(unittest.TestCase):
     def test_profiles_parse_and_match_role_contract(self) -> None:
         expected = {
             "Explorer.toml": ("Explorer", "gpt-5.6-luna", "medium", "read-only"),
-            "Executor.toml": ("Executor", "gpt-5.6-luna", "high", "workspace-write"),
+            "Executor.toml": ("Executor", "gpt-5.6-terra", "high", "workspace-write"),
             "Frontend.toml": ("Frontend", "gemini-3.8-flash", "high", "workspace-write"),
             "FrontendFast.toml": ("FrontendFast", "gemini-3.7-flash", "high", "workspace-write"),
             "Reviewer.toml": ("Reviewer", "gpt-5.6-terra", "medium", "read-only"),
