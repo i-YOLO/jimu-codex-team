@@ -18,8 +18,8 @@ from pathlib import Path
 from uuid import uuid4
 
 
-ROLES = ("Explorer", "Executor", "Reviewer", "default")
-WORKING_ROLES = ROLES[:3]
+WORKING_ROLES = ("Explorer", "Executor", "Frontend", "FrontendFast", "Reviewer")
+ROLES = WORKING_ROLES + ("default",)
 TEMPLATES = Path(__file__).resolve().parents[1] / "assets" / "agent-profiles"
 
 

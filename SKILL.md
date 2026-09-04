@@ -1,6 +1,6 @@
 ---
 name: jimu-codex-team
-description: Coordinate substantial work with an explicitly invoked Jimu Codex agent team. Use only when the user invokes $jimu-codex-team or explicitly asks for the Jimu team, parallel agents, delegation, or independent agent review. Route evidence gathering, bounded execution, and fresh review to the smallest useful set of configured custom agents while the main thread keeps unresolved decisions and final acceptance. Do not use for ordinary single-slice tasks.
+description: Coordinate substantial work with an explicitly invoked Jimu Codex agent team. Use only when the user invokes $jimu-codex-team or explicitly asks for the Jimu team, parallel agents, delegation, or independent agent review. Route evidence gathering, bounded execution, Gemini-backed frontend implementation, and fresh review to the smallest useful set of configured custom agents while the main thread keeps unresolved decisions and final acceptance. Do not use for ordinary single-slice tasks.
 ---
 
 # Jimu Codex Team
@@ -19,7 +19,7 @@ Announce activation once per user task, not once per spawn.
 
 Before any spawn, inspect the model-visible `spawn_agent` schema.
 
-- Every working spawn must explicitly pass `agent_type` as exactly `Explorer`, `Executor`, or `Reviewer`.
+- Every working spawn must explicitly pass `agent_type` as exactly one of `Explorer`, `Executor`, `Frontend`, `FrontendFast`, or `Reviewer`.
 - Never omit `agent_type`, never pass `default`, and never use `task_name` to select a profile.
 - The only omission exception is one explicitly authorized, no-tool guard self-test during installation or repair verification, as described in the setup reference. It is never a working dispatch.
 - If `agent_type` or the intended custom profile is unavailable, do not spawn a generic child. Keep the work in the main thread and report that custom-profile routing is unavailable.
@@ -63,6 +63,16 @@ Use `Explorer` for non-trivial read-only discovery across current web sources, d
 - Give independent evidence slices to separate Explorers only when the slices do not duplicate one another.
 - Do not tell an Explorer the desired conclusion.
 - Do not repeat the same discovery in the main thread; inspect the returned evidence needed for acceptance.
+
+### Frontend
+
+Use `Frontend` or `FrontendFast` for a complete, independently owned frontend slice after the parent fixes its product, design-system, contract, and acceptance decisions.
+
+- `Frontend` (`gemini-3.8-flash`) is the normal frontend role and should handle frontend work by default, including new pages, cross-component work, responsive or multi-state work, client integration, and visual ambiguity.
+- `FrontendFast` (`gemini-3.7-flash`) is supplementary only. Use it exceptionally when the design system and API contract are fixed, the edit is very localized and low-risk, target files are known, deterministic checks exist, and the smaller route has a material speed or cost benefit; otherwise use `Frontend`.
+- `FrontendFast` is neither a failure fallback nor a concurrent takeover of an owned slice.
+- Read [references/frontend-ui.md](references/frontend-ui.md) only when dispatching `Frontend` or `FrontendFast`; it contains the frontend-specific packet, constraints, checks, and visual-evidence rules.
+- Both roles remain bounded to frontend work, preserve unrelated changes, reuse the existing design system, and return a blocker instead of changing a backend, database, auth, or API contract.
 
 ### Executor
 

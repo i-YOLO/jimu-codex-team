@@ -38,12 +38,17 @@ class SkillContractTests(unittest.TestCase):
         self.assertIn("never use `task_name` to select a profile", skill)
         self.assertIn("Children never spawn descendants", skill)
         self.assertIn('fork_turns="none"', skill)
+        runtime_gate = skill.split("## Runtime Gate", 1)[1].split("## ", 1)[0]
+        for role in ("Explorer", "Executor", "Frontend", "FrontendFast", "Reviewer"):
+            with self.subTest(role=role):
+                self.assertIn(role, runtime_gate)
 
     def test_all_conditional_references_and_diagnostics_exist(self) -> None:
         for relative in (
             "references/agent-setup.md",
             "references/evaluation.md",
             "references/interactive-testing.md",
+            "references/frontend-ui.md",
             "scripts/inspect-team-runs.py",
             "scripts/install-agent-profiles.py",
         ):

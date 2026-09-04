@@ -4,7 +4,7 @@ Read only for installation, repair, runtime verification, guard enablement, disa
 
 ## Canonical Templates And Runtime Copies
 
-The canonical templates live under `assets/agent-profiles/`. The Skill directory may be a symlink; active personal Profile files under `~/.codex/agents/` must be ordinary TOML copies for this installation method. Do not link those four files.
+The canonical templates live under `assets/agent-profiles/`. The Skill directory may be a symlink; active personal Profile files under `~/.codex/agents/` must be ordinary TOML copies for this installation method. Do not link those six files.
 
 On 2026-08-30, Desktop `0.151.0-alpha.7.1` failed to apply linked Profiles with `Too many levels of symbolic links (os error 62)`, then exposed only `agent type is currently not available`. Ordinary reading and TOML parsing still succeeded. Prior probes on CLI `0.145.0` did not establish Desktop compatibility. This is an observed version-specific failure, not a claim that every Codex release rejects symlinks.
 
@@ -17,12 +17,12 @@ python3 scripts/install-agent-profiles.py
 python3 scripts/install-agent-profiles.py --check
 ```
 
-Default selection is `Explorer`, `Executor`, and `Reviewer`. The installer does not modify `config.toml`, start agents, or access the network. It installs exact template bytes as ordinary files and leaves matching copies unchanged.
+Default selection is `Explorer`, `Executor`, `Frontend`, `FrontendFast`, and `Reviewer`. The installer does not modify `config.toml`, start agents, or access the network. It installs exact template bytes as ordinary files and leaves matching copies unchanged.
 
 Options:
 
 - `--check`: read-only file-type and template consistency check; exits nonzero for missing, linked, invalid, or differing files.
-- `--roles Explorer Executor Reviewer default`: explicit subset; `default` is never selected implicitly.
+- `--roles Explorer Executor Frontend FrontendFast Reviewer default`: explicit subset; `default` is never selected implicitly.
 - `--agents-dir PATH`: override the installation directory; defaults to `$CODEX_HOME/agents`, or `~/.codex/agents`.
 - `--migrate-links`: migrate only links resolving to the corresponding template in this checkout.
 - `--replace`: explicitly replace inspected custom files or unknown links, preserving originals in a backup first.
@@ -33,7 +33,7 @@ Backups are timestamped under the sibling `agents-backups/jimu-codex-team/` dire
 
 ## Migrate An Existing Linked Installation
 
-1. Run `--check --roles Explorer Executor Reviewer default`; record existing file types, link targets, and canonical template hashes.
+1. Run `--check --roles Explorer Executor Frontend FrontendFast Reviewer default`; record existing file types, link targets, and canonical template hashes.
 2. Move any active guard to a unique backup directory before migration. For the personal default path:
 
    ```bash
@@ -45,7 +45,7 @@ Backups are timestamped under the sibling `agents-backups/jimu-codex-team/` dire
    ```
 
 3. Run `python3 scripts/install-agent-profiles.py --migrate-links`, then `--check`.
-4. Verify the three working roles in the affected Desktop task before reinstalling the guard.
+4. Verify the five working roles in the affected Desktop task before reinstalling the guard.
 
 Do not copy directly over an existing symlink: that may overwrite its canonical target without replacing the link. If an old checkout owns the links, inspect it and explicitly authorize `--replace`; do not bypass the conflict silently.
 
@@ -70,7 +70,7 @@ Record the actual Desktop executable and version. On this Mac the executable is 
 2. Send one bounded no-tool probe to each working role with `fork_turns="none"` and a complete dispatch packet. Do not continue interrupted business work or mutate the project as part of the probe.
 3. Inspect actual traces for role, model, effort, terminal status, effective sandbox, and any child tool calls. Do not rely on self-reported role names.
 4. If the task needs configuration reload, coordinate a restart/resume; never close a running app or interrupt unrelated work automatically.
-5. Only after all three working roles pass, run `python3 scripts/install-agent-profiles.py --roles default` and check all four Profiles.
+5. Only after all five working roles pass, run `python3 scripts/install-agent-profiles.py --roles default` and check all six Profiles.
 6. Run exactly one controlled omission probe. This authorized setup self-test is the only exception to the Skill's explicit-role rule. The child must call no tools and return the exact `DISPATCH BLOCKED` line in the guard template. `subagent/unknown` is expected for this one omitted-role trace.
 7. Run an explicit `Explorer` probe after the guard test, and a simple explicitly invoked Skill task that should use no children.
 
@@ -80,6 +80,6 @@ The parent task's live permission mode can override Profile defaults. Record eff
 
 ## Disable, Restore, And Customize
 
-Disable the guard by moving its ordinary file to a unique backup location as above. The three working Profiles remain installed. Restore it using the installer only after working-role checks pass; do not restore the known-incompatible symlink as the normal recovery path.
+Disable the guard by moving its ordinary file to a unique backup location as above. The five working Profiles remain installed. Restore it using the installer only after working-role checks pass; do not restore the known-incompatible symlink as the normal recovery path.
 
-Keep the backed-up links/files for recovery. Report backup locations and any rollback gaps; never delete a user's customized Profile. Customize the canonical template, inspect changes, then synchronize explicitly. Preserve read-only Explorer/Reviewer roles, Executor ownership, shallow fan-out, fresh review, user authority, and main-thread final acceptance.
+Keep the backed-up links/files for recovery. Report backup locations and any rollback gaps; never delete a user's customized Profile. Customize the canonical template, inspect changes, then synchronize explicitly. Preserve read-only Explorer/Reviewer roles, workspace-write Executor/Frontend/FrontendFast ownership, shallow fan-out, fresh review, user authority, and main-thread final acceptance.

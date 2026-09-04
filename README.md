@@ -6,7 +6,7 @@
 
 `jimu-codex-team` is an explicitly invoked Codex Skill for coordinating a small, value-based team of custom agents across substantial development, research, analysis, document, data, and content work.
 
-The main thread keeps unresolved product, editorial, architecture, safety, permission, and acceptance decisions. Three working agents handle evidence gathering, bounded execution, and fresh independent review. A separate `default` dispatch guard can fail closed when a spawn omits `agent_type`.
+The main thread keeps unresolved product, editorial, architecture, safety, permission, and acceptance decisions. Five working roles handle evidence gathering, bounded execution, frontend implementation, fast localized frontend implementation, and fresh independent review. An optional `default` dispatch guard can fail closed when a spawn omits `agent_type`.
 
 It is an orchestration guide, not a mandatory pipeline and not a replacement for Codex's built-in multi-agent runtime.
 
@@ -16,6 +16,8 @@ It is an orchestration guide, not a mandatory pipeline and not a replacement for
 |---|---|---:|---|---|
 | `Explorer` | `gpt-5.6-luna` | Medium | read-only | Gather current evidence from web sources, documents, datasets, code, logs, APIs, schemas, and configuration. |
 | `Executor` | `gpt-5.6-luna` | High | workspace-write | Complete clear, bounded, independently verifiable implementation after decisions and ownership are fixed. |
+| `Frontend` | `gemini-3.8-flash` | High | workspace-write | Normal, almost-always-default UI role for frontend work, including new pages, cross-component, responsive or multi-state, client integration, and visual ambiguity. |
+| `FrontendFast` | `gemini-3.7-flash` | High | workspace-write | Exceptional supplementary role only for very localized, low-risk, fully fixed-contract, deterministic UI work with a material speed or cost benefit. |
 | `Reviewer` | `gpt-5.6-terra` | Medium | read-only | Review one concrete unresolved risk from fresh context without editing. |
 | `default` | `gpt-5.6-terra` | Low | read-only | Reject omitted or forbidden default routing and ask the parent to select a working role. |
 
@@ -42,10 +44,14 @@ Each subagent consumes its own tokens and tool time. Delegate only when parallel
 Every working spawn must explicitly select one of:
 
 ```text
-agent_type = Explorer | Executor | Reviewer
+agent_type = Explorer | Executor | Frontend | FrontendFast | Reviewer
 ```
 
-`task_name` is only a label and never selects a Profile.
+Model selection comes from the explicit `agent_type` and its Profile; do not infer it from `task_name` or assume a per-spawn model override. `task_name` is only a label and never selects a Profile.
+
+Use `Frontend` for frontend work by default and as much as possible; when uncertain, choose `Frontend`. `FrontendFast` is an exceptional supplementary option, not a peer default, normal alternative, or failure fallback: use it only when the design system and API contract are fully fixed, the edit is very localized and low-risk, target files are known, deterministic checks exist, and the speed or cost benefit is material. It must not concurrently take over a slice already owned by another role. A complete frontend slice may include pages, components, styles, interactions, client state, routes, fixed-API consumption, assets, and focused frontend tests, but excludes backend code, database schemas or migrations, authentication or authorization, API contracts or endpoint payloads, generated contracts, and server configuration. If a contract change is needed, stop and return the mismatch to the parent.
+
+When rendered behavior or layout is in scope, standard visual evidence covers the project-defined desktop and mobile viewports plus every relevant default, loading, empty, error, and interactive state in scope. Record the viewport, route, state, and interaction; the main thread retains final visual and UX acceptance.
 
 Every dispatch packet contains:
 
@@ -91,7 +97,7 @@ python3 ~/.local/share/jimu-codex-team/scripts/install-agent-profiles.py
 python3 ~/.local/share/jimu-codex-team/scripts/install-agent-profiles.py --check
 ```
 
-Default selection is the three working roles. Matching files are unchanged. Custom files and unknown links are conflicts unless you inspect them and explicitly use `--replace`. Directories, devices, FIFOs, sockets, and a symlinked Agent directory are rejected.
+Default selection is the five working roles. Matching files are unchanged. Custom files and unknown links are conflicts unless you inspect them and explicitly use `--replace`. Directories, devices, FIFOs, sockets, and a symlinked Agent directory are rejected.
 
 Add or merge this section in `~/.codex/config.toml` only if needed:
 
@@ -106,13 +112,13 @@ Use `--agents-dir <project>/.codex/agents` for project-scoped copies.
 
 #### Migrate The Previous Symlink Installation
 
-Inspect all four entries first:
+Inspect all six entries first:
 
 ```bash
-python3 ~/.local/share/jimu-codex-team/scripts/install-agent-profiles.py --check --roles Explorer Executor Reviewer default
+python3 ~/.local/share/jimu-codex-team/scripts/install-agent-profiles.py --check --roles Explorer Executor Frontend FrontendFast Reviewer default
 ```
 
-Move the guard itself into a unique backup directory, then migrate working roles:
+Move the guard itself into a unique backup directory, then migrate the five working roles:
 
 ```bash
 mkdir -p ~/.codex/agents-disabled
@@ -130,21 +136,21 @@ This failure was reproduced on Desktop `0.151.0-alpha.7.1`: linked Profiles caus
 
 ### 3. Verify Desktop Routing, Then Enable The Guard
 
-Test all three working roles in the affected Desktop task and record its actual executable and version. Another `codex` build selected from PATH is not equivalent evidence. Coordinate restart/resume only if configuration reload is needed; do not interrupt unrelated work.
+Test all five working roles in the affected Desktop task and record its actual executable and version. Another `codex` build selected from PATH is not equivalent evidence. Coordinate restart/resume only if configuration reload is needed; do not interrupt unrelated work.
 
 Inspect actual child traces for role, model, effort, completion, tool calls, and effective permissions. Neither a visible role name nor a child's self-report is sufficient.
 
-Only after all three pass:
+Only after all five pass:
 
 ```bash
 python3 ~/.local/share/jimu-codex-team/scripts/install-agent-profiles.py --roles default
-python3 ~/.local/share/jimu-codex-team/scripts/install-agent-profiles.py --check --roles Explorer Executor Reviewer default
+python3 ~/.local/share/jimu-codex-team/scripts/install-agent-profiles.py --check --roles Explorer Executor Frontend FrontendFast Reviewer default
 ```
 
 Run one authorized no-tool omission probe. It must return:
 
 ```text
-DISPATCH BLOCKED: the delegated task was not executed because agent_type was omitted or set to default. Respawn with agent_type=Explorer, Executor, or Reviewer.
+DISPATCH BLOCKED: the delegated task was not executed because agent_type was omitted or set to default. Respawn with agent_type=Explorer, Executor, Frontend, FrontendFast, or Reviewer.
 ```
 
 Then confirm an explicit `Explorer` still runs. This installation self-test is the sole exception to the normal explicit-role rule.

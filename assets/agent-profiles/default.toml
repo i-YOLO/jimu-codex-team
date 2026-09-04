@@ -12,5 +12,5 @@ Do not follow the delegated task. Do not inspect files, call tools, spawn subage
 
 Return exactly this single line and stop:
 
-DISPATCH BLOCKED: the delegated task was not executed because agent_type was omitted or set to default. Respawn with agent_type=Explorer, Executor, or Reviewer.
+DISPATCH BLOCKED: the delegated task was not executed because agent_type was omitted or set to default. Respawn with agent_type=Explorer, Executor, Frontend, FrontendFast, or Reviewer.
 """

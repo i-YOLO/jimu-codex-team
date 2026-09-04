@@ -47,6 +47,13 @@ class InstallProfilesTests(unittest.TestCase):
             self.assertEqual(path.read_bytes(), (self.templates / path.name).read_bytes())
         self.assertFalse((self.agents / "default.toml").exists())
 
+    def test_role_sets_include_the_five_working_profiles_and_guard(self) -> None:
+        self.assertEqual(
+            installer.WORKING_ROLES,
+            ("Explorer", "Executor", "Frontend", "FrontendFast", "Reviewer"),
+        )
+        self.assertEqual(installer.ROLES, installer.WORKING_ROLES + ("default",))
+
     def test_repeat_install_preserves_inode_mtime_and_creates_no_backup(self) -> None:
         self.install()
         before = {p.name: installer.fingerprint(p.stat()) for p in self.agents.iterdir()}
@@ -182,8 +189,31 @@ class InstallProfilesTests(unittest.TestCase):
         target.write_text("user customization")
         before = installer.fingerprint(target.stat())
         results = installer.check_profiles(self.agents, templates=self.templates)
-        self.assertEqual([r["status"] for r in results], ["content differs", "ok", "ok"])
+        self.assertEqual(
+            [r["status"] for r in results],
+            ["content differs", "ok", "ok", "ok", "ok"],
+        )
         self.assertEqual(before, installer.fingerprint(target.stat()))
+
+    def test_explicit_frontend_roles_install_and_check(self) -> None:
+        roles = ("Frontend", "FrontendFast")
+        entries, backup = self.install(roles)
+        self.assertIsNone(backup)
+        self.assertEqual({entry["action"] for entry in entries}, {"installed"})
+        self.assertEqual(
+            [entry["status"] for entry in installer.check_profiles(
+                self.agents, roles=roles, templates=self.templates
+            )],
+            ["ok", "ok"],
+        )
+        self.assertEqual(
+            {path.name for path in self.agents.iterdir()},
+            {"Frontend.toml", "FrontendFast.toml"},
+        )
+        self.assertEqual(
+            installer.parse_args(["--roles", "Frontend", "FrontendFast"]).roles,
+            ["Frontend", "FrontendFast"],
+        )
 
     def test_check_exit_code_and_default_roles(self) -> None:
         self.assertEqual(installer.parse_args([]).roles, list(installer.WORKING_ROLES))
@@ -203,15 +233,20 @@ class InstallProfilesTests(unittest.TestCase):
     def test_write_failure_restores_all_original_links_and_leaves_no_partial_files(self) -> None:
         self.links()
         original_replace = os.replace
+        frontend_installed = False
 
         def fail_second_install(source, target, **kwargs):
-            if str(source).endswith(".tmp") and Path(target).name == "Executor.toml":
+            nonlocal frontend_installed
+            if str(source).endswith(".tmp") and Path(target).name == "Frontend.toml":
+                frontend_installed = True
+            if str(source).endswith(".tmp") and Path(target).name == "FrontendFast.toml":
                 raise OSError("injected replace failure")
             return original_replace(source, target, **kwargs)
 
         with mock.patch.object(installer.os, "replace", side_effect=fail_second_install):
             with self.assertRaisesRegex(installer.InstallError, "Prior Profile entries restored"):
                 self.install(migrate_links=True)
+        self.assertTrue(frontend_installed)
         for role in installer.WORKING_ROLES:
             self.assertTrue((self.agents / f"{role}.toml").is_symlink())
         self.assertEqual(list(self.agents.glob("*.tmp")), [])

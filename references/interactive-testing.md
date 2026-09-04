@@ -4,7 +4,7 @@ Read this reference only when real UI, browser, device, account, or external int
 
 ## Operator Rules
 
-- Give repeatable, bounded, observable interaction paths to Executor.
+- Give repeatable, bounded, observable interaction paths to `Frontend`, `FrontendFast`, or `Executor` when the assigned slice requires UI interaction.
 - Keep product tradeoffs, subjective visual judgment, weak oracles, and final experience acceptance in the main thread.
 - Allow only one active operator per shared browser session, device, account, or external environment.
 - Parallelize only when environments and mutable state are genuinely isolated.
